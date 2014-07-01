@@ -2,44 +2,63 @@ package auth
 
 import (
 	"encoding/base64"
-	"github.com/go-martini/martini"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/codegangsta/negroni"
 )
 
 func Test_BasicAuth(t *testing.T) {
-	recorder := httptest.NewRecorder()
-
 	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte("foo:bar"))
 
-	m := martini.New()
-	m.Use(Basic("foo", "bar"))
-	m.Use(func(res http.ResponseWriter, req *http.Request) {
+	h := http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		res.Write([]byte("hello"))
 	})
+	m := negroni.New()
+	m.Use(Basic("foo", "bar"))
+	m.UseHandler(h)
 
-	r, _ := http.NewRequest("GET", "foo", nil)
+	{
+		r, _ := http.NewRequest("GET", "foo", nil)
+		recorder := httptest.NewRecorder()
+		m.ServeHTTP(recorder, r)
 
-	m.ServeHTTP(recorder, r)
+		if recorder.Code != 401 {
+			t.Error("Response not 401")
+		}
 
-	if recorder.Code != 401 {
-		t.Error("Response not 401")
+		respBody := recorder.Body.String()
+		if respBody == "hello" {
+			t.Error("Auth block failed")
+		}
+		if respBody != "Not Authorized\n" {
+		}
+
+		recorder = httptest.NewRecorder()
+		r.Header.Set("Authorization", auth)
+		m.ServeHTTP(recorder, r)
+
+		if recorder.Code == 401 {
+			t.Error("Response is 401")
+		}
+
+		if recorder.Body.String() != "hello" {
+			t.Error("Auth failed, got: ", recorder.Body.String())
+		}
 	}
 
-	if recorder.Body.String() == "hello" {
-		t.Error("Auth block failed")
-	}
+	{
+		r, _ := http.NewRequest("HEAD", "foo", nil)
+		recorder := httptest.NewRecorder()
+		m.ServeHTTP(recorder, r)
 
-	recorder = httptest.NewRecorder()
-	r.Header.Set("Authorization", auth)
-	m.ServeHTTP(recorder, r)
+		if recorder.Code != 401 {
+			t.Error("Response not 401")
+		}
 
-	if recorder.Code == 401 {
-		t.Error("Response is 401")
-	}
-
-	if recorder.Body.String() != "hello" {
-		t.Error("Auth failed, got: ", recorder.Body.String())
+		if recorder.Body.String() != "" {
+			t.Error("Response body must be empty with HEAD")
+		}
 	}
 }
