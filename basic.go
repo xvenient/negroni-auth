@@ -15,11 +15,7 @@ func Basic(username string, password string) negroni.HandlerFunc {
 		auth := req.Header.Get("Authorization")
 		if !SecureCompare(auth, "Basic "+siteAuth) {
 			res.Header().Set("WWW-Authenticate", "Basic realm=\"Authorization Required\"")
-			if req.Method == "HEAD" {
-				res.WriteHeader(http.StatusUnauthorized)
-			} else {
-				http.Error(res, "Not Authorized", http.StatusUnauthorized)
-			}
+			http.Error(res, "Not Authorized", http.StatusUnauthorized)
 		}
 		r := res.(negroni.ResponseWriter)
 		if r.Status() != http.StatusUnauthorized {

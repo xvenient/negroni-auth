@@ -19,46 +19,30 @@ func Test_BasicAuth(t *testing.T) {
 	m.Use(Basic("foo", "bar"))
 	m.UseHandler(h)
 
-	{
-		r, _ := http.NewRequest("GET", "foo", nil)
-		recorder := httptest.NewRecorder()
-		m.ServeHTTP(recorder, r)
+	r, _ := http.NewRequest("GET", "foo", nil)
+	recorder := httptest.NewRecorder()
+	m.ServeHTTP(recorder, r)
 
-		if recorder.Code != 401 {
-			t.Error("Response not 401")
-		}
-
-		respBody := recorder.Body.String()
-		if respBody == "hello" {
-			t.Error("Auth block failed")
-		}
-		if respBody != "Not Authorized\n" {
-		}
-
-		recorder = httptest.NewRecorder()
-		r.Header.Set("Authorization", auth)
-		m.ServeHTTP(recorder, r)
-
-		if recorder.Code == 401 {
-			t.Error("Response is 401")
-		}
-
-		if recorder.Body.String() != "hello" {
-			t.Error("Auth failed, got: ", recorder.Body.String())
-		}
+	if recorder.Code != 401 {
+		t.Error("Response not 401")
 	}
 
-	{
-		r, _ := http.NewRequest("HEAD", "foo", nil)
-		recorder := httptest.NewRecorder()
-		m.ServeHTTP(recorder, r)
+	respBody := recorder.Body.String()
+	if respBody == "hello" {
+		t.Error("Auth block failed")
+	}
+	if respBody != "Not Authorized\n" {
+	}
 
-		if recorder.Code != 401 {
-			t.Error("Response not 401")
-		}
+	recorder = httptest.NewRecorder()
+	r.Header.Set("Authorization", auth)
+	m.ServeHTTP(recorder, r)
 
-		if recorder.Body.String() != "" {
-			t.Error("Response body must be empty with HEAD")
-		}
+	if recorder.Code == 401 {
+		t.Error("Response is 401")
+	}
+
+	if recorder.Body.String() != "hello" {
+		t.Error("Auth failed, got: ", recorder.Body.String())
 	}
 }
