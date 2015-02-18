@@ -18,32 +18,36 @@ const (
 	bcryptCost             = 12
 )
 
-// DataStore is a interface for retrieving hashed password by userid.
+// DataStore is an interface for retrieving hashed password by userid.
 type DataStore interface {
 	Get(userId string) (hashedPassword []byte, found bool)
 }
 
-// simpleBasic is a simple DataStore that store only one userid, hashed password pair.
-type simpleBasic struct {
+// SimpleBasic is a simple DataStore that store only one userid, hashed password pair.
+type SimpleBasic struct {
 	userId         string
 	hashedPassword []byte
 }
 
-// simpleBasic.Get returns hashed password by userid.
-func (d *simpleBasic) Get(userId string) (hashedPassword []byte, found bool) {
+// SimpleBasic.Get returns hashed password by userid.
+func (d *SimpleBasic) Get(userId string) ([]byte, bool) {
 	if userId == d.userId {
 		return d.hashedPassword, true
 	}
 	return nil, false
 }
 
-// NewSimpleBasic returns simpleBasic builded from userid, password
-func NewSimpleBasic(userId, password string) (*simpleBasic, error) {
+// NewSimpleBasic returns SimpleBasic builded from userid, password
+func NewSimpleBasic(userId, password string) (DataStore, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
-	return &simpleBasic{
+	if err != nil {
+		return nil, err
+	}
+
+	return &SimpleBasic{
 		userId:         userId,
 		hashedPassword: hashedPassword,
-	}, err
+	}, nil
 }
 
 // requireAuth writes error to client which initiates the authentication process
@@ -54,7 +58,7 @@ func requireAuth(w http.ResponseWriter) {
 }
 
 // getCred get userid, password from request.
-func getCred(req *http.Request) (userId string, password string) {
+func getCred(req *http.Request) (string, string) {
 	// Split authorization header.
 	s := strings.SplitN(req.Header.Get("Authorization"), " ", 2)
 	if len(s) != 2 || s[0] != "Basic" {
@@ -73,18 +77,12 @@ func getCred(req *http.Request) (userId string, password string) {
 		return "", ""
 	}
 
-	// Assign return value.
-	userId = pair[0]
-	password = pair[1]
-
-	return
+	return pair[0], pair[1]
 }
 
-// Basic returns a negroni.HandlerFunc that authenticates via Basic Auth.
+// NewBasic returns a negroni.HandlerFunc that authenticates via Basic auth using data store.
 // Writes a http.StatusUnauthorized if authentication fails.
-func Basic(dataStoreModel DataStore) negroni.HandlerFunc {
-	var dataStore = dataStoreModel
-
+func NewBasic(dataStore DataStore) negroni.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 		// Extract userid, password from request.
 		userId, password := getCred(req)
@@ -118,10 +116,21 @@ func Basic(dataStoreModel DataStore) negroni.HandlerFunc {
 	}
 }
 
+// Basic returns a negroni.HandlerFunc that authenticates via Basic Auth.
+// Writes a http.StatusUnauthorized if authentication fails.
+func Basic(userid, password string) negroni.HandlerFunc {
+	dataStore, err := NewSimpleBasic(userid, password)
+	if err != nil {
+		return nil
+	}
+
+	return NewBasic(dataStore)
+}
+
 // CacheBasic returns a negroni.HandlerFunc that authenticates via Basic auth using cache.
 // Writes a http.StatusUnauthorized if authentication fails.
-func CacheBasic(dataStoreModel DataStore, cacheExpireTime, cachePurseTime time.Duration) negroni.HandlerFunc {
-	var basic = Basic(dataStoreModel)
+func CacheBasic(dataStore DataStore, cacheExpireTime, cachePurseTime time.Duration) negroni.HandlerFunc {
+	var basic = NewBasic(dataStore)
 	var c = cache.New(cacheExpireTime, cachePurseTime)
 
 	return func(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
@@ -147,6 +156,6 @@ func CacheBasic(dataStoreModel DataStore, cacheExpireTime, cachePurseTime time.D
 
 // CacheBasicDefault returns a negroni.HandlerFunc that authenticates via Basic auth using cache.
 // with default cache configuration. Writes a http.StatusUnauthorized if authentication fails.
-func CacheBasicDefault(dataStoreModel DataStore) negroni.HandlerFunc {
-	return CacheBasic(dataStoreModel, defaultCacheExpireTime, defaultCachePurseTime)
+func CacheBasicDefault(dataStore DataStore) negroni.HandlerFunc {
+	return CacheBasic(dataStore, defaultCacheExpireTime, defaultCachePurseTime)
 }
