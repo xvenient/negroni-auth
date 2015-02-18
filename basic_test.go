@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/codegangsta/negroni"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func Test_BasicAuth(t *testing.T) {
@@ -60,7 +59,7 @@ func (ds *MockDataStore) Get(key string) ([]byte, bool) {
 func Test_CacheBasic(t *testing.T) {
 	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte("foo:bar"))
 	invalidAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte("foo:barbar"))
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("bar"), 12)
+	hashedPassword, err := Hash("bar")
 	if err != nil {
 		t.Error("Hashing password failed")
 	}
