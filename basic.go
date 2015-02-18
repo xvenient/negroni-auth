@@ -121,7 +121,7 @@ func NewBasic(dataStore DataStore) negroni.HandlerFunc {
 func Basic(userid, password string) negroni.HandlerFunc {
 	dataStore, err := NewSimpleBasic(userid, password)
 	if err != nil {
-		return nil
+		panic(err)
 	}
 
 	return NewBasic(dataStore)
