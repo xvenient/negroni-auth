@@ -39,7 +39,7 @@ func (d *SimpleBasic) Get(userId string) ([]byte, bool) {
 
 // NewSimpleBasic returns SimpleBasic builded from userid, password
 func NewSimpleBasic(userId, password string) (*SimpleBasic, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
+	hashedPassword, err := Hash(password)
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +78,11 @@ func getCred(req *http.Request) (string, string) {
 	}
 
 	return pair[0], pair[1]
+}
+
+// Hash returns a hashed password.
+func Hash(password string) ([]byte, error) {
+	return bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
 }
 
 // NewBasic returns a negroni.HandlerFunc that authenticates via Basic auth using data store.
