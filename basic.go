@@ -38,7 +38,7 @@ func (d *SimpleBasic) Get(userId string) ([]byte, bool) {
 }
 
 // NewSimpleBasic returns SimpleBasic builded from userid, password
-func NewSimpleBasic(userId, password string) (DataStore, error) {
+func NewSimpleBasic(userId, password string) (*SimpleBasic, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
 	if err != nil {
 		return nil, err
