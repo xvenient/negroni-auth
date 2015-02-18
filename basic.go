@@ -25,14 +25,14 @@ type DataStore interface {
 
 // SimpleBasic is a simple DataStore that store only one userid, hashed password pair.
 type SimpleBasic struct {
-	userId         string
-	hashedPassword []byte
+	UserId         string
+	HashedPassword []byte
 }
 
 // SimpleBasic.Get returns hashed password by userid.
 func (d *SimpleBasic) Get(userId string) ([]byte, bool) {
-	if userId == d.userId {
-		return d.hashedPassword, true
+	if userId == d.UserId {
+		return d.HashedPassword, true
 	}
 	return nil, false
 }
@@ -45,8 +45,8 @@ func NewSimpleBasic(userId, password string) (DataStore, error) {
 	}
 
 	return &SimpleBasic{
-		userId:         userId,
-		hashedPassword: hashedPassword,
+		UserId:         userId,
+		HashedPassword: hashedPassword,
 	}, nil
 }
 
