@@ -32,8 +32,6 @@ func Test_BasicAuth(t *testing.T) {
 	if respBody == "hello" {
 		t.Error("Auth block failed")
 	}
-	if respBody != "Not Authorized\n" {
-	}
 
 	recorder = httptest.NewRecorder()
 	r.Header.Set("Authorization", auth)
@@ -87,8 +85,6 @@ func Test_CacheBasic(t *testing.T) {
 	if respBody == "hello" {
 		t.Error("Auth block failed")
 	}
-	if respBody != "Not Authorized\n" {
-	}
 
 	// Test request succeeds with valid credential.
 	r.Header.Set("Authorization", auth)
@@ -115,8 +111,6 @@ func Test_CacheBasic(t *testing.T) {
 	respBody = recorder.Body.String()
 	if respBody == "hello" {
 		t.Error("Auth block failed")
-	}
-	if respBody != "Not Authorized\n" {
 	}
 
 	// Test cache expiration.
@@ -150,8 +144,6 @@ func Test_CacheBasic(t *testing.T) {
 	respBody = recorder.Body.String()
 	if respBody == "hello" {
 		t.Error("Auth block failed")
-	}
-	if respBody != "Not Authorized\n" {
 	}
 
 	dataStore.HashedPassword = hashedPassword
