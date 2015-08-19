@@ -17,8 +17,10 @@ import (
 const (
 	defaultCacheExpireTime = 10 * time.Minute
 	defaultCachePurseTime  = 60 * time.Second
-	bcryptCost             = 12
 )
+
+// See https://godoc.org/golang.org/x/crypto/bcrypt#pkg-constants for more details.
+var BcryptCost = 10
 
 // NewSimpleBasic returns *datastore.Simple built from userid, password.
 func NewSimpleBasic(userId, password string) (*datastore.Simple, error) {
@@ -65,7 +67,7 @@ func getCred(req *http.Request) (string, string) {
 
 // Hash returns a hashed password.
 func Hash(password string) ([]byte, error) {
-	return bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
+	return bcrypt.GenerateFromPassword([]byte(password), BcryptCost)
 }
 
 // NewBasic returns a negroni.HandlerFunc that authenticates via Basic auth using data store.
