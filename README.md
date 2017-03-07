@@ -8,7 +8,7 @@ Negroni middleware/handler for http basic authentication forked from [martini-co
 
 ~~~ go
 import (
-  "github.com/codegangsta/negroni"
+  "github.com/urfave/negroni"
   "github.com/nabeken/negroni-auth"
 )
 
